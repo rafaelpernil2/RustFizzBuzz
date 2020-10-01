@@ -50,15 +50,15 @@ fn read_line(text: &str) -> String {
 /// * `divisor_word_list` - A vector of DivisorWord struct
 /// * `sample_size` - The last number to test each divisor combination against (inclusive), starting on 1
 fn fizz_buzz(divisor_word_list: &Vec<DivisorWord>, sample_size: u32) {
-    for i in 1..sample_size + 1 {
+    for num in 1..sample_size + 1 {
         let mut word_list = String::new();
-        for divisor_word in divisor_word_list {
-            if i % divisor_word.divisor == 0 {
-                word_list.push_str(&divisor_word.word);
+        for DivisorWord { divisor, word } in divisor_word_list {
+            if num % divisor == 0 {
+                word_list.push_str(&word);
             }
         }
         if word_list == "" {
-            word_list.push_str(&i.to_string());
+            word_list.push_str(&num.to_string());
         }
         println!("{}", word_list);
     }
@@ -69,7 +69,7 @@ fn fizz_buzz(divisor_word_list: &Vec<DivisorWord>, sample_size: u32) {
 /// * `vector` - A vector of string literals
 /// * `index` - An index for accessing a position of vector
 /// * `is_valid` - A bool flag
-fn vec_get_flag<'a>(vector: &Vec<&'a str>, index: usize, is_valid: &mut bool) -> &'a str {
+fn vec_get_flag<'word>(vector: &Vec<&'word str>, index: usize, is_valid: &mut bool) -> &'word str {
     match vector.get(index) {
         Some(value) => value,
         None => {
@@ -92,13 +92,12 @@ fn vec_get_flag_w_callback<T>(
     is_valid: &mut bool,
     callback: fn(&str, &mut bool) -> T,
 ) -> T {
-    let result = vec_get_flag(vector, index, is_valid);
-    callback(result, is_valid)
+    callback(vec_get_flag(vector, index, is_valid), is_valid)
 }
 
-/// Given a divisor and a boolean flag, it marks the flag as false and returns 0 if divisor.parse() fails. Otherwise, returns divisor.parse()
-fn validate_divisor(divisor: &str, is_valid: &mut bool) -> u32 {
-    match divisor.parse() {
+/// Given a string and a boolean flag, it marks the flag as false and returns 0 if number.parse::<u32>() fails. Otherwise, returns divisor.parse::<u32>()
+fn validate_number(number: &str, is_valid: &mut bool) -> u32 {
+    match number.parse() {
         Ok(value) => value,
         Err(_) => {
             *is_valid = false;
@@ -125,8 +124,9 @@ fn main() {
 
         let mut is_valid = true;
         let result_vector: Vec<&str> = input.split(",").collect();
-        let element = DivisorWord {
-            divisor: vec_get_flag_w_callback(&result_vector, 0, &mut is_valid, validate_divisor),
+
+        let DivisorWord { divisor, word } = DivisorWord {
+            divisor: vec_get_flag_w_callback(&result_vector, 0, &mut is_valid, validate_number),
             word: vec_get_flag(&result_vector, 1, &mut is_valid).to_string(),
         };
         // Show an error if the user provided values were not valid
@@ -135,8 +135,8 @@ fn main() {
             continue;
         }
 
-        println!("You have added {} for {}", element.word, element.divisor);
-        divisor_word_list.push(element);
+        println!("You have added {} for {}", word, divisor);
+        divisor_word_list.push(DivisorWord { divisor, word });
         // Remind the user the token to stop adding combinations and calculate FizzBuzz
         if count % 3 == 1 {
             println!("IMPORTANT: Input '{}' to calculate FizzBuzz", STOP_TOKEN);
